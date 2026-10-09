@@ -1,0 +1,41 @@
+# Caddy delante de la API de Vigia (docs/DESPLIEGUE.md).
+#
+# HTTPS automatico: con un dominio real, Caddy pide y renueva el certificado
+# solo (Let's Encrypt), y necesita los puertos 80 y 443 abiertos. Con
+# VIGIA_DOMAIN=localhost usa su CA interna: sirve para probar en la maquina
+# propia (el navegador avisa del certificado; `curl -k` lo acepta).
+{$VIGIA_DOMAIN:localhost} {
+	# El limite real de subida va aca, ademas de en la API: Caddy corta el
+	# cuerpo antes de que llegue al contenedor. Es el mismo numero que
+	# VIGIA_MAX_UPLOAD_MB (en MiB, como la API). El middleware de la API es la
+	# defensa de quien corre la imagen sin Caddy (AUDITORIA-1.0.md, SEC-05).
+	request_body {
+		max_size {$VIGIA_MAX_UPLOAD_MB:200}MiB
+	}
+
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		X-Frame-Options "DENY"
+		# El build de Vite no usa scripts ni estilos en linea, salvo los
+		# atributos style que React y Recharts ponen en los elementos
+		# (`unsafe-inline` solo en estilos). `blob:` en img-src y default-src
+		# cubre el reporte HTML, que el panel abre desde un Blob.
+		Content-Security-Policy "default-src 'self' blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		-Server
+	}
+
+	# Caddy agrega X-Forwarded-For con la IP real del cliente: la API solo la
+	# usa porque uvicorn confia en la red de este proxy (FORWARDED_ALLOW_IPS).
+	reverse_proxy vigia:8000 {
+		# Los trabajos largos no pasan por aca (se consultan por polling), pero
+		# una subida grande tarda: margen amplio de lectura.
+		transport http {
+			read_timeout 10m
+			write_timeout 10m
+		}
+	}
+}

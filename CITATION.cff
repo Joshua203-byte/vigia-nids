@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use Vigía in your research, please cite it as below."
+title: "Vigía: quality control for the datasets behind network intrusion detection models"
+type: software
+authors:
+  - family-names: Garcilazo
+    given-names: Joshua
+    alias: Joshua203-byte
+version: 1.0.3
+date-released: 2026-10-09
+license: Apache-2.0
+repository-code: "https://github.com/Joshua203-byte/vigia-nids"
+url: "https://pypi.org/project/vigia-nids/"
+keywords:
+  - intrusion detection
+  - NIDS
+  - dataset quality
+  - data leakage
+  - machine learning
+  - security
+abstract: >-
+  Vigía audits the datasets used to train network intrusion detectors for
+  defects that inflate evaluation metrics (duplicates, train/test leakage,
+  shortcut columns, label noise), detects data poisoning, and monitors drift
+  in production.

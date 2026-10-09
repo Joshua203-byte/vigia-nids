@@ -1,0 +1,89 @@
+name: Release
+
+# Publicar a PyPI es irreversible: una version subida no se puede reutilizar.
+# Por eso nada se construye ni se publica sin pasar antes los tests y sin que
+# el tag coincida con la version del paquete (AUDITORIA-1.0.md, CI-01).
+on:
+  push:
+    tags: ["v*"]
+
+# Permisos minimos para todo el workflow; el job de publicacion pide solo
+# `id-token: write` (publicacion de confianza con OIDC, sin tokens).
+permissions:
+  contents: read
+
+# Las actions van fijadas por SHA de commit, no por tag: un tag se puede mover
+# y este workflow publica con credenciales de confianza. El comentario dice a
+# que version corresponde cada SHA.
+jobs:
+  test:
+    name: Tests y version
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vigia
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev,ml,parquet,api]"
+      - run: ruff check src tests
+      - run: ruff format --check src tests
+      - run: mypy src
+      - run: pytest -q
+      - name: El tag coincide con la version del paquete
+        run: |
+          declarada=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          instalada=$(python -c "import vigia; print(vigia.__version__)")
+          if [ "v${declarada}" != "${GITHUB_REF_NAME}" ]; then
+            echo "El tag ${GITHUB_REF_NAME} no coincide con la version de pyproject.toml (v${declarada})" >&2
+            exit 1
+          fi
+          if [ "${instalada}" != "${declarada}" ]; then
+            echo "vigia.__version__ (${instalada}) no coincide con pyproject.toml (${declarada})" >&2
+            exit 1
+          fi
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vigia
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: pip install build twine
+      - run: python -m build
+      - run: twine check dist/*
+      - name: La rueda funciona instalada sin extras
+        # Un venv nuevo, solo con las dependencias que declara la rueda: el job de
+        # tests instala los extras y no vio que `vigia` no arrancaba sin `click`
+        # (VERIFICACION-1.0.md, VER-01).
+        run: |
+          python -m venv "$RUNNER_TEMP/limpio"
+          "$RUNNER_TEMP/limpio/bin/pip" install -q dist/*.whl
+          "$RUNNER_TEMP/limpio/bin/vigia" version
+          "$RUNNER_TEMP/limpio/bin/vigia" checks
+          awk 'BEGIN { print "a,b,label,split"; for (i = 0; i < 60; i++) printf "%d,%d,%s,%s\n", i, i % 7, (i % 2 ? "x" : "y"), (i < 40 ? "train" : "test") }' > "$RUNNER_TEMP/s.csv"
+          "$RUNNER_TEMP/limpio/bin/vigia" audit "$RUNNER_TEMP/s.csv"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dist
+          path: vigia/dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2

@@ -1,0 +1,43 @@
+# docs/PLAN.md, fase 3.5: `docker compose up` deja la API + el panel
+# navegables en un solo comando, en http://localhost:8000.
+services:
+  vigia:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      # La clave se lee del entorno del host o de un archivo .env junto a este
+      # compose: `VIGIA_API_KEY=... docker compose up`. Vacia, la API corre sin
+      # autenticacion (ver el warning que loguea vigia.api.app al arrancar);
+      # no la dejes asi fuera de una maquina de desarrollo.
+      - VIGIA_API_KEY=${VIGIA_API_KEY:-}
+      - VIGIA_MAX_UPLOAD_MB=200
+      - VIGIA_RATE_LIMIT_PER_MINUTE=30
+      # El panel se sirve desde el mismo origen (ver Dockerfile), así que no
+      # hace falta agregar el puerto del host acá; se deja igual por si se
+      # quiere exponer la API a otro origen además del panel embebido.
+      - VIGIA_CORS_ORIGINS=http://localhost:8000
+    volumes:
+      # Datasets/uploads temporales (docs/PLAN.md, 3.5). El proceso borra cada
+      # archivo cuando el job asociado termina, borra a los 30 minutos
+      # (VIGIA_UPLOAD_TTL_MINUTES) los que ningun job uso, se niega a pasar de
+      # VIGIA_STORAGE_QUOTA_MB y, al arrancar, borra los directorios que dejo
+      # una ejecucion anterior (vigia.api.storage). El volumen solo sirve para
+      # que el disco sea el del host y no el de la capa del contenedor.
+      - vigia_uploads:/data/uploads
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  vigia_uploads:

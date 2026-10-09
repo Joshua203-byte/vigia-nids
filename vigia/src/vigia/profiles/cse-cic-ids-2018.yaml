@@ -1,0 +1,213 @@
+# Perfil de CSE-CIC-IDS2018 (seccion 11.3 de vigia.md, requisito R17).
+#
+# Fuente de las ventanas de ataque: pagina oficial del CIC (University of New
+# Brunswick / CSE), tabla 2 — https://www.unb.ca/cic/datasets/ids-2018.html
+# (consultada 30/09/2026). IPs y horarios son los publicados ahi; la pagina no
+# indica zona horaria.
+id: cse-cic-ids-2018
+name: "CSE-CIC-IDS2018"
+
+# La pagina oficial NO nombra las columnas. Estos nombres se confirmaron el
+# 30/09/2026 contra las cabeceras de los 10 CSV "Processed Traffic Data for
+# ML Algorithms" (80 columnas). No se fija time_col a proposito: ver
+# known_issues (timestamp_12h).
+column_roles:
+  label_col: "Label"
+  dst_port_col: "Dst Port"
+
+known_attackers:
+  - "172.31.70.4"
+  - "172.31.70.6"
+  - "172.31.70.46"
+  - "172.31.70.8"
+  - "172.31.70.23"
+  - "172.31.70.16"
+  - "18.218.115.60"
+  - "13.58.225.34"
+  - "18.219.211.138"
+
+# DDoS y Botnet usan 10 maquinas: la pagina no lista sus IPs.
+attack_windows:
+  - label: "FTP-BruteForce"
+    day: "2018-02-14"
+    start: "10:32"
+    end: "12:09"
+    attacker: "172.31.70.4"
+    victim: "172.31.69.25"
+  - label: "SSH-Bruteforce"
+    day: "2018-02-14"
+    start: "14:01"
+    end: "15:31"
+    attacker: "172.31.70.6"
+    victim: "172.31.69.25"
+  - label: "DoS-GoldenEye"
+    day: "2018-02-15"
+    start: "09:26"
+    end: "10:09"
+    attacker: "172.31.70.46"
+    victim: "172.31.69.25"
+  - label: "DoS-Slowloris"
+    day: "2018-02-15"
+    start: "10:59"
+    end: "11:40"
+    attacker: "172.31.70.8"
+    victim: "172.31.69.25"
+  - label: "DoS-SlowHTTPTest"
+    day: "2018-02-16"
+    start: "10:12"
+    end: "11:08"
+    attacker: "172.31.70.23"
+    victim: "172.31.69.25"
+  - label: "DoS-Hulk"
+    day: "2018-02-16"
+    start: "13:45"
+    end: "14:19"
+    attacker: "172.31.70.16"
+    victim: "172.31.69.25"
+  - label: "DDoS-LOIC-HTTP"
+    day: "2018-02-20"
+    start: "10:12"
+    end: "11:17"
+    attacker: "multiples (10 maquinas)"
+    victim: "172.31.69.25"
+  - label: "DDoS-LOIC-UDP"
+    day: "2018-02-20"
+    start: "13:13"
+    end: "13:32"
+    attacker: "multiples (10 maquinas)"
+    victim: "172.31.69.25"
+  - label: "DDoS-LOIC-UDP"
+    day: "2018-02-21"
+    start: "10:09"
+    end: "10:43"
+    attacker: "multiples (10 maquinas)"
+    victim: "172.31.69.28"
+  - label: "DDoS-HOIC"
+    day: "2018-02-21"
+    start: "14:05"
+    end: "15:05"
+    attacker: "multiples (10 maquinas)"
+    victim: "172.31.69.28"
+  - label: "Web Brute Force"
+    day: "2018-02-22"
+    start: "10:17"
+    end: "11:24"
+    attacker: "18.218.115.60"
+    victim: "172.31.69.28"
+  - label: "XSS"
+    day: "2018-02-22"
+    start: "13:50"
+    end: "14:29"
+    attacker: "18.218.115.60"
+    victim: "172.31.69.28"
+  - label: "SQL Injection"
+    day: "2018-02-22"
+    start: "16:15"
+    end: "16:29"
+    attacker: "18.218.115.60"
+    victim: "172.31.69.28"
+  - label: "Web Brute Force"
+    day: "2018-02-23"
+    start: "10:03"
+    end: "11:03"
+    attacker: "18.218.115.60"
+    victim: "172.31.69.28"
+  - label: "XSS"
+    day: "2018-02-23"
+    start: "13:00"
+    end: "14:10"
+    attacker: "18.218.115.60"
+    victim: "172.31.69.28"
+  - label: "SQL Injection"
+    day: "2018-02-23"
+    start: "15:05"
+    end: "15:18"
+    attacker: "18.218.115.60"
+    victim: "172.31.69.28"
+  - label: "Infiltration"
+    day: "2018-02-28"
+    start: "10:50"
+    end: "12:05"
+    attacker: "13.58.225.34"
+    victim: "172.31.69.24"
+  - label: "Infiltration"
+    day: "2018-02-28"
+    start: "13:42"
+    end: "14:40"
+    attacker: "13.58.225.34"
+    victim: "172.31.69.24"
+  - label: "Infiltration"
+    day: "2018-03-01"
+    start: "09:57"
+    end: "10:55"
+    attacker: "13.58.225.34"
+    victim: "172.31.69.13"
+  - label: "Infiltration"
+    day: "2018-03-01"
+    start: "14:00"
+    end: "15:37"
+    attacker: "13.58.225.34"
+    victim: "172.31.69.13"
+  - label: "Botnet"
+    day: "2018-03-02"
+    start: "10:11"
+    end: "11:34"
+    attacker: "18.219.211.138"
+    victim: "multiples (10 maquinas)"
+  - label: "Botnet"
+    day: "2018-03-02"
+    start: "14:24"
+    end: "15:55"
+    attacker: "18.219.211.138"
+    victim: "multiples (10 maquinas)"
+
+# Nombres de etiqueta tal como aparecen en los CSV (distintos de los de la
+# tabla oficial; conservan errores de tipeo del dataset).
+label_values:
+  benign: "Benign"
+  observed:
+    - "SSH-Bruteforce"
+    - "FTP-BruteForce"
+    - "DoS attacks-GoldenEye"
+    - "DoS attacks-Slowloris"
+    - "DoS attacks-SlowHTTPTest"
+    - "DoS attacks-Hulk"
+    - "DDoS attacks-LOIC-HTTP"
+    - "DDOS attack-HOIC"
+    - "DDOS attack-LOIC-UDP"
+    - "Brute Force -Web"
+    - "Brute Force -XSS"
+    - "SQL Injection"
+    - "Infilteration"
+    - "Bot"
+
+# Problemas conocidos. Los de CICFlowMeter son los mismos que en CIC-IDS2017;
+# los marcados "observado" se comprobaron en los CSV (30/09/2026).
+known_issues:
+  - id: "timestamp_12h"
+    note: >
+      Observado: la columna Timestamp usa reloj de 12 horas sin AM/PM
+      (p. ej. Hulk aparece a las 01:45 y la documentacion dice 13:45).
+      Ordenar por Timestamp mezcla manana y tarde, asi que leak.temporal no
+      es fiable sobre esa columna.
+  - id: "sin_ips_ni_split"
+    note: >
+      Observado: la version procesada no trae IPs ni columna de split, asi
+      que leak.host, leak.session y leak.temporal no corren.
+  - id: "truncado_excel"
+    note: >
+      Observado: 7 de los 10 CSV (14, 15, 16, 21, 22, 23-02 y 02-03) se
+      cortan en 1.048.575 filas, el limite de Excel. 20-02, 28-02 y 01-03
+      estan completos.
+  - id: "etiquetas_vs_documentacion"
+    note: >
+      Observado: Bot (02-03) esta etiquetado durante todo el dia y no solo en
+      las dos ventanas publicadas; SQL Injection (22 y 23-02) son 34 y 53
+      filas dispersas fuera de su ventana; el CSV del 20-02 no trae etiqueta
+      LOIC-UDP.
+  - id: "flow.termination"
+    note: >
+      CICFlowMeter parte una conexion larga en varios flujos por timeout.
+  - id: "validity.nan_inf"
+    note: >
+      Columnas de tasa generan NaN/Inf cuando la duracion del flujo es cero.

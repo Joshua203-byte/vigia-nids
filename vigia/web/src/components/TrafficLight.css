@@ -1,0 +1,80 @@
+.traffic-light {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 14px;
+  border: 2px solid;
+  background: var(--card);
+}
+
+.traffic-light--rojo {
+  border-color: var(--light-rojo);
+}
+
+.traffic-light--amarillo {
+  border-color: var(--light-amarillo);
+}
+
+.traffic-light--verde {
+  border-color: var(--light-verde);
+}
+
+.traffic-light--gris {
+  border-color: var(--light-gris);
+}
+
+.traffic-light__icon {
+  flex-shrink: 0;
+  font-size: 2.75rem;
+  line-height: 1;
+}
+
+.traffic-light__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.traffic-light__word {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.traffic-light--rojo .traffic-light__word {
+  color: var(--light-rojo);
+}
+
+.traffic-light--amarillo .traffic-light__word {
+  color: var(--light-amarillo);
+}
+
+.traffic-light--verde .traffic-light__word {
+  color: var(--light-verde);
+}
+
+.traffic-light--gris .traffic-light__word {
+  color: var(--light-gris);
+}
+
+.traffic-light__desc {
+  color: var(--fg);
+  font-size: 0.95rem;
+  max-width: 60ch;
+}
+
+.traffic-light--compact {
+  padding: 8px 12px;
+  gap: 8px;
+  border-radius: 8px;
+}
+
+.traffic-light--compact .traffic-light__icon {
+  font-size: 1.3rem;
+}
+
+.traffic-light--compact .traffic-light__word {
+  font-size: 0.9rem;
+}

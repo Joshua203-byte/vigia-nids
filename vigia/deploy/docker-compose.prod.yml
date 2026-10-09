@@ -1,0 +1,105 @@
+# Despliegue de produccion de Vigia: la API detras de Caddy (docs/DESPLIEGUE.md).
+#
+#   cp .env.example .env     # y completar VIGIA_DOMAIN, VIGIA_API_KEY y VIGIA_VERSION
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Pensado para un servidor chico (4 vCPU, 8 GB de RAM, 80 GB de disco) con una
+# sola instancia: la cola de trabajos y los reportes viven en memoria, asi que
+# NO se escala con mas replicas ni con --workers > 1.
+
+services:
+  vigia:
+    # Sin build aca: la imagen se construye y se publica aparte, y el servidor
+    # solo la baja. Para probar en local:
+    #   docker build -t ghcr.io/joshua203-byte/vigia-nids:local ..
+    #   VIGIA_VERSION=local docker compose -f docker-compose.prod.yml up
+    image: ghcr.io/joshua203-byte/vigia-nids:${VIGIA_VERSION:?poner VIGIA_VERSION (por ejemplo 1.0.0)}
+    restart: unless-stopped
+    # Sin `ports`: la API no se publica en el host, solo Caddy le llega por la
+    # red interna (AUDITORIA-1.0.md, SEC-09).
+    expose:
+      - "8000"
+    environment:
+      # Con VIGIA_ENV=production la API se niega a arrancar sin clave.
+      - VIGIA_ENV=production
+      - VIGIA_API_KEY=${VIGIA_API_KEY:?poner VIGIA_API_KEY (openssl rand -hex 32)}
+      - VIGIA_MAX_UPLOAD_MB=${VIGIA_MAX_UPLOAD_MB:-200}
+      - VIGIA_RATE_LIMIT_PER_MINUTE=${VIGIA_RATE_LIMIT_PER_MINUTE:-30}
+      - VIGIA_MAX_CONCURRENT_JOBS=${VIGIA_MAX_CONCURRENT_JOBS:-1}
+      - VIGIA_STORAGE_QUOTA_MB=${VIGIA_STORAGE_QUOTA_MB:-4096}
+      # El panel se sirve desde el mismo origen que la API, asi que alcanza con
+      # el propio dominio.
+      - VIGIA_CORS_ORIGINS=https://${VIGIA_DOMAIN:?poner VIGIA_DOMAIN}
+      # uvicorn solo confia en X-Forwarded-For si viene de la red del proxy
+      # (la fija mas abajo): sin esto el limitador vería siempre la IP de Caddy.
+      - FORWARDED_ALLOW_IPS=172.28.0.0/24
+    volumes:
+      - vigia_uploads:/data/uploads
+    # Todo el sistema de archivos es de solo lectura salvo las subidas.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # Una auditoria de 1 M x 80 pica a 5,4 GiB (docs/PLAN.md): con un trabajo a
+    # la vez, 6 GB dejan lugar para el sistema y Caddy en 8 GB. Pasado el
+    # limite, Docker mata el contenedor y no el servidor entero.
+    mem_limit: 6g
+    memswap_limit: 6g
+    cpus: 3
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      default:
+        ipv4_address: 172.28.0.20
+
+  caddy:
+    # Fijada por digest, como las imagenes base del Dockerfile (SEC-09).
+    image: caddy:2@sha256:8dc9fa87b36b25303d1c67d2a09f5824b7f3bfd72cb052f246e5da2133fe29a8
+    restart: unless-stopped
+    depends_on:
+      vigia:
+        condition: service_healthy
+    ports:
+      # Se pueden cambiar para probar en una maquina con 80/443 ocupados; en el
+      # servidor real tienen que ser 80 y 443 (Let's Encrypt).
+      - "${VIGIA_HTTP_PORT:-80}:80"
+      - "${VIGIA_HTTPS_PORT:-443}:443"
+      - "${VIGIA_HTTPS_PORT:-443}:443/udp"
+    environment:
+      - VIGIA_DOMAIN=${VIGIA_DOMAIN}
+      # Caddy y la API tienen que acordar el limite de subida.
+      - VIGIA_MAX_UPLOAD_MB=${VIGIA_MAX_UPLOAD_MB:-200}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificados y cuenta ACME: perderlos obliga a pedirlos de nuevo.
+      - caddy_data:/data
+      - caddy_config:/config
+    mem_limit: 256m
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  vigia_uploads:
+  caddy_data:
+  caddy_config:

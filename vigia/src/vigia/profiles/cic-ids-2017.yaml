@@ -1,0 +1,129 @@
+# Perfil de CIC-IDS2017 (sección 11.3 de vigia.md, requisito R17).
+#
+# Fuente de los datos de ataque: pagina oficial del CIC, University of New
+# Brunswick — https://www.unb.ca/cic/datasets/ids-2017.html (verificado
+# 26/09/2026). Las IPs y horarios son los publicados ahi, no estimaciones.
+id: cic-ids-2017
+name: "CIC-IDS2017"
+
+# CICFlowMeter deja el nombre de columna con un espacio inicial (" Label",
+# " Destination Port"); Vigía ya se lo quita con strip_column_names() al leer
+# (ver io/readers.py). No hay un esquema canónico tipo "dst_port": Vigía
+# trabaja con el nombre real de la columna, así que esto solo fija los roles
+# para que --profile evite que el usuario los repita a mano en cada corrida.
+column_roles:
+  label_col: "Label"
+  dst_port_col: "Destination Port"
+
+# IPs atacantes y víctimas documentadas por día, con la ventana horaria de
+# cada ataque. Útil como contexto para revisar manualmente hallazgos de
+# leak.host o leak.temporal contra el comportamiento esperado del dataset.
+known_attackers:
+  - "205.174.165.73" # Kali, atacante en casi todos los ataques
+  - "205.174.165.69" # Win 8.1, DDoS LOIT (viernes)
+  - "205.174.165.70" # Win 8.1, DDoS LOIT (viernes)
+  - "205.174.165.71" # Win 8.1, DDoS LOIT (viernes)
+
+attack_windows:
+  - label: "FTP-Patator"
+    day: "2017-07-04"
+    start: "09:20"
+    end: "10:20"
+    attacker: "205.174.165.73"
+    victim: "205.174.165.68"
+  - label: "SSH-Patator"
+    day: "2017-07-04"
+    start: "14:00"
+    end: "15:00"
+    attacker: "205.174.165.73"
+    victim: "205.174.165.68"
+  - label: "DoS slowloris"
+    day: "2017-07-05"
+    start: "09:47"
+    end: "10:10"
+    attacker: "205.174.165.73"
+    victim: "205.174.165.68"
+  - label: "DoS Slowhttptest"
+    day: "2017-07-05"
+    start: "10:14"
+    end: "10:35"
+    attacker: "205.174.165.73"
+    victim: "205.174.165.68"
+  - label: "DoS Hulk"
+    day: "2017-07-05"
+    start: "10:43"
+    end: "11:00"
+    attacker: "205.174.165.73"
+    victim: "205.174.165.68"
+  - label: "DoS GoldenEye"
+    day: "2017-07-05"
+    start: "11:10"
+    end: "11:23"
+    attacker: "205.174.165.73"
+    victim: "205.174.165.68"
+  - label: "Heartbleed"
+    day: "2017-07-05"
+    start: "15:12"
+    end: "15:32"
+    attacker: "205.174.165.73"
+    victim: "205.174.165.66"
+  - label: "Web Attack - Brute Force"
+    day: "2017-07-06"
+    start: "09:20"
+    end: "10:00"
+    attacker: "205.174.165.73"
+    victim: "205.174.165.68"
+  - label: "Web Attack - XSS"
+    day: "2017-07-06"
+    start: "10:15"
+    end: "10:35"
+    attacker: "205.174.165.73"
+    victim: "205.174.165.68"
+  - label: "Web Attack - SQL Injection"
+    day: "2017-07-06"
+    start: "10:40"
+    end: "10:42"
+    attacker: "205.174.165.73"
+    victim: "205.174.165.68"
+  - label: "Infiltration"
+    day: "2017-07-06"
+    start: "14:19"
+    end: "15:45"
+    attacker: "205.174.165.73"
+    victim: "192.168.10.8"
+  - label: "Bot"
+    day: "2017-07-07"
+    start: "10:02"
+    end: "11:02"
+    attacker: "205.174.165.73"
+    victim: "multiples"
+  - label: "PortScan"
+    day: "2017-07-07"
+    start: "13:55"
+    end: "15:27"
+    attacker: "205.174.165.73"
+    victim: "205.174.165.68"
+  - label: "DDoS"
+    day: "2017-07-07"
+    start: "15:56"
+    end: "16:16"
+    attacker: "205.174.165.69-71"
+    victim: "205.174.165.68"
+
+# Errores conocidos del dataset que Vigía ya detecta y documenta (no son
+# inventados: cada uno corresponde a un check existente y a texto ya escrito
+# en docs/).
+known_issues:
+  - id: "flow.termination"
+    note: >
+      CICFlowMeter parte una conexión larga en varios flujos por timeout
+      (docs/CHECKS.md linea ~117), lo que infla el conteo de flujos por
+      sesión real.
+  - id: "validity.nan_inf"
+    note: >
+      Columnas de tasa (bytes/s, paquetes/s) generan NaN/Inf cuando la
+      duración del flujo es cero (docs/USO.md linea ~478-485).
+  - id: "validity.constant"
+    note: >
+      Init_Win_bytes_* usa -1 como centinela de "no aplica" propio de
+      CICFlowMeter, no un valor real (docs/CHECKS.md linea ~281).

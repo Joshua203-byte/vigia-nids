@@ -1,0 +1,60 @@
+name: Wrong finding (false positive or false negative)
+description: Vigía reported a problem that is not there, or missed one that is.
+labels: ["wrong-finding"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the most useful report you can send. Please do not attach the dataset: a link to its public source is enough.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - False positive (reported, but not a real problem)
+        - False negative (a real problem it did not report)
+        - Wrong severity or wrong count
+    validations:
+      required: true
+  - type: input
+    id: check
+    attributes:
+      label: Check id
+      placeholder: dup.cross_split, leak.temporal, shortcut.single_feature...
+    validations:
+      required: true
+  - type: input
+    id: dataset
+    attributes:
+      label: Dataset and version
+      placeholder: "CIC-IDS2017, MachineLearningCSV.zip, the 8 CSVs"
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The exact command or Python call, including --profile and column options.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: finding
+    attributes:
+      label: What Vigía reported
+      description: The relevant finding from report.json (or the console output).
+      render: json
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it is wrong
+      description: How you checked it (a query, a paper, the dataset documentation).
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Vigía version
+      description: Output of `vigia version`.
+    validations:
+      required: true

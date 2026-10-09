@@ -1,0 +1,35 @@
+# Dependabot mantiene al dia lo que el repo fija a proposito: las actions por
+# SHA (AUDITORIA-1.0.md, CI-01), las imagenes base por digest (SEC-09) y las
+# dependencias de Python y del panel. Sin esto los pines quedan congelados y
+# acumulan vulnerabilidades sin que nadie se entere. Semanal y agrupado, para
+# que sean pocos PR; cada uno pasa por el CI completo antes de mergearse.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: pip
+    directory: /vigia
+    schedule:
+      interval: weekly
+    groups:
+      python:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /vigia/web
+    schedule:
+      interval: weekly
+    groups:
+      web:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /vigia
+    schedule:
+      interval: weekly

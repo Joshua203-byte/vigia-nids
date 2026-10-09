@@ -1,0 +1,100 @@
+name: CI
+on: [push, pull_request]
+
+# Solo lectura del repositorio: ningun job de CI necesita escribir nada
+# (AUDITORIA-1.0.md, CI-02). Las actions van fijadas por SHA, los mismos que
+# verifico release.yml, para que una etiqueta movida no cambie lo que corre.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: vigia
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[dev,ml,parquet,api]"
+      - run: ruff check src tests
+      - run: ruff format --check src tests
+      - run: mypy src
+      - run: pytest -q --cov=src --cov-report=term-missing
+
+  # Construye la rueda y la instala en un venv nuevo SIN extras. El job `test`
+  # instala `[dev,ml,parquet,api]` y por eso no vio que `vigia` no arrancaba con
+  # `typer` 0.27 (no trae `click`): VERIFICACION-1.0.md, VER-01.
+  wheel:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vigia
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: pip install build
+      - run: python -m build --wheel
+      - name: Instalar sin extras y correr los comandos basicos
+        run: |
+          python -m venv "$RUNNER_TEMP/limpio"
+          "$RUNNER_TEMP/limpio/bin/pip" install -q dist/*.whl
+          "$RUNNER_TEMP/limpio/bin/vigia" version
+          "$RUNNER_TEMP/limpio/bin/vigia" checks
+          awk 'BEGIN { print "a,b,label,split"; for (i = 0; i < 60; i++) printf "%d,%d,%s,%s\n", i, i % 7, (i % 2 ? "x" : "y"), (i < 40 ? "train" : "test") }' > "$RUNNER_TEMP/s.csv"
+          "$RUNNER_TEMP/limpio/bin/vigia" audit "$RUNNER_TEMP/s.csv"
+
+  # El panel se despliega junto a la API y hasta ahora el CI no lo miraba:
+  # un error de tipos o de lint solo aparecia al construir la imagen.
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vigia/web
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: vigia/web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vigia
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - run: docker build -t vigia-nids:ci .
+      - name: Arrancar y consultar /health
+        run: |
+          docker run -d --name vigia -p 8000:8000 \
+            -e VIGIA_API_KEY=ci-key -e VIGIA_MAX_UPLOAD_MB=1 vigia-nids:ci
+          for i in $(seq 1 20); do curl -fs http://localhost:8000/health && exit 0; sleep 2; done
+          docker logs vigia; exit 1
+      - name: La API exige la clave
+        run: test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/api/v1/checks)" = "401"
+      - name: Una subida por encima del limite da 413
+        run: |
+          head -c 2097152 /dev/zero > grande.csv
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-API-Key: ci-key' \
+            -F file=@grande.csv http://localhost:8000/api/v1/datasets)" = "413"
+      - name: Un enlace profundo del panel devuelve el panel
+        run: test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/resultado/abc)" = "200"
+      - name: La imagen de produccion no arranca sin clave
+        run: |
+          if docker run --rm -e VIGIA_ENV=production vigia-nids:ci; then
+            echo "arranco sin VIGIA_API_KEY"; exit 1
+          fi

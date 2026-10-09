@@ -1,0 +1,313 @@
+/* Paleta compartida con el reporte HTML del servidor
+   (src/vigia/report/render.py) para que el panel se sienta parte del mismo
+   producto. Ver también docs/PLAN.md, fase 3.4 (accesibilidad): los colores
+   de severidad y semáforo ya están pensados para 4.5:1 de contraste sobre
+   fondo blanco/negro; no reusar estos tokens con otros fondos sin verificar
+   contraste de nuevo. */
+
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbfa;
+  --fg: #1a1a18;
+  --card: #fff;
+  --line: #e3e3df;
+  --muted: #5c5c56;
+
+  --sev-critical: #b3122c;
+  --sev-high: #c2410c;
+  --sev-medium: #a16207;
+  --sev-low: #3f6212;
+  --sev-info: #1f5673;
+
+  --light-rojo: #b3122c;
+  --light-amarillo: #a16207;
+  --light-verde: #3f6212;
+  --light-gris: #57534e;
+
+  --focus-ring: #1f5673;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16161a;
+    --fg: #ececea;
+    --card: #1e1e24;
+    --line: #32323a;
+    --muted: #a0a09a;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #16161a;
+  --fg: #ececea;
+  --card: #1e1e24;
+  --line: #32323a;
+  --muted: #a0a09a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+}
+
+/* Foco de teclado visible en toda la app (docs/PLAN.md, 3.4). No usamos
+   `outline: none` en ningún lado; solo reforzamos el color para que se vea
+   bien en ambos temas. */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.app-shell {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.app-nav {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+}
+
+.app-nav a {
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.app-nav a:hover {
+  background: var(--card);
+  color: var(--fg);
+}
+
+.app-nav a[aria-current="page"] {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 1.1rem;
+  margin-right: auto;
+  padding: 8px 4px;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: 1.8rem;
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 32px 0 12px;
+}
+
+p.sub {
+  color: var(--muted);
+  margin: 0 0 24px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.field input[type="text"] {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0.95rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--fg);
+  color: var(--bg);
+  border: 1px solid var(--fg);
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--fg);
+}
+
+.dropzone {
+  border: 2px dashed var(--line);
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--muted);
+  cursor: pointer;
+  background: var(--card);
+}
+
+.dropzone:hover,
+.dropzone.dragover {
+  border-color: var(--fg);
+  color: var(--fg);
+}
+
+.dropzone input[type="file"] {
+  display: none;
+}
+
+.error-box {
+  background: color-mix(in srgb, var(--sev-critical) 12%, var(--card));
+  border: 1px solid var(--sev-critical);
+  color: var(--fg);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 16px 0;
+}
+
+.error-box strong {
+  color: var(--sev-critical);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cid {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+code,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+pre {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.82rem;
+  margin-top: 10px;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+.empty {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  vertical-align: -0.15em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.5s;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

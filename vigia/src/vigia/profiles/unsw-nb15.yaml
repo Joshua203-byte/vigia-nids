@@ -1,0 +1,76 @@
+# Perfil de UNSW-NB15 (seccion 11.3 de vigia.md, requisito R17).
+#
+# Fuentes: pagina oficial de UNSW Canberra
+# (https://research.unsw.edu.au/projects/unsw-nb15-dataset) y los archivos
+# oficiales de los autores (carpeta "CSV Files" de su OneDrive), comprobados el
+# 30/09/2026: UNSW_NB15_training-set.csv y testing-set.csv, NUSW-NB15_GT.csv
+# (verdad de terreno de los ataques) y UNSW-NB15_LIST_EVENTS.csv.
+#
+# Este perfil es para los archivos CON cabecera (training-set y testing-set,
+# 45 columnas). Los cuatro CSV crudos se publican SIN cabecera: para ellos
+# usar el perfil `unsw-nb15-raw`.
+id: unsw-nb15
+name: "UNSW-NB15"
+
+# Columnas del training-set y testing-set oficiales (cabecera verificada).
+# La etiqueta binaria se llama "label" y la categoria "attack_cat".
+column_roles:
+  label_col: "label"
+  category_col: "attack_cat"
+
+# Categorias de ataque de la pagina oficial. Observado en el GT: "Backdoor"
+# (4.097 eventos) y "Backdoors" (256) son la misma clase escrita de dos formas.
+attack_categories:
+  - Fuzzers
+  - Analysis
+  - Backdoors
+  - DoS
+  - Exploits
+  - Generic
+  - Reconnaissance
+  - Shellcode
+  - Worms
+
+files:
+  raw: ["UNSW-NB15_1.csv", "UNSW-NB15_2.csv", "UNSW-NB15_3.csv", "UNSW-NB15_4.csv"] # 2.540.044 registros, sin cabecera
+  train: "UNSW_NB15_training-set.csv" # 175.341 registros (56.000 normales, 119.341 ataques)
+  test: "UNSW_NB15_testing-set.csv" # 82.332 registros (37.000 normales, 45.332 ataques)
+
+# Verdad de terreno (NUSW-NB15_GT.csv, 174.347 eventos de ataque). Los
+# horarios son epoch UTC: el GT cubre dos jornadas de captura.
+known_attackers:
+  - "175.45.176.0"
+  - "175.45.176.1"
+  - "175.45.176.2"
+  - "175.45.176.3"
+victim_ips: ["149.171.126.10", "149.171.126.11", "149.171.126.12", "149.171.126.13", "149.171.126.14", "149.171.126.15", "149.171.126.16", "149.171.126.17", "149.171.126.18", "149.171.126.19"]
+
+capture_days:
+  - day: "2015-01-22"
+    attacks_start: "11:50:14"
+    attacks_end: "13:47:28"
+    timezone: "UTC"
+    ground_truth_events: 14776
+  - day: "2015-02-18"
+    attacks_start: "00:23:59"
+    attacks_end: "12:21:09"
+    timezone: "UTC"
+    ground_truth_events: 159571
+
+known_issues:
+  - id: "solape_train_test"
+    note: >
+      Observado: el training-set y el testing-set oficiales comparten filas
+      (dup.cross_split, ver benchmarks/RESULTADOS.md).
+  - id: "attack_cat_deriva_de_la_etiqueta"
+    note: >
+      attack_cat determina label: usarla como caracteristica filtra la
+      respuesta (shortcut.single_feature la marca con 100 %).
+  - id: "taxonomia_backdoor"
+    note: >
+      En el GT "Backdoor" y "Backdoors" son la misma categoria escrita de dos
+      formas, y LIST_EVENTS trae categorias con espacios sobrantes.
+  - id: "id_secuencial"
+    note: >
+      La columna id del training-set y testing-set es un indice, no una
+      caracteristica; reinicia en cada archivo.

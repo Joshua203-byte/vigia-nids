@@ -1,0 +1,51 @@
+# Perfil de los CSV crudos de UNSW-NB15 (UNSW-NB15_1.csv a _4.csv).
+#
+# Fuente: archivos oficiales de UNSW Canberra (carpeta "CSV Files" del
+# OneDrive de los autores) y NUSW-NB15_features.csv, comprobados el 30/09/2026.
+# Los cuatro CSV crudos NO traen cabecera (49 columnas, el primero con BOM) y
+# suman 2.540.044 filas, como dice la pagina oficial. Los nombres salen de
+# NUSW-NB15_features.csv, en orden (la entrada "ct_src_ ltm" del diccionario
+# trae un espacio de mas; aqui es ct_src_ltm).
+#
+# Los archivos de entrenamiento y prueba (UNSW_NB15_training-set.csv y
+# testing-set.csv) SI traen cabecera y otras 45 columnas: usar el perfil
+# `unsw-nb15` para ellos, no este.
+id: unsw-nb15-raw
+name: "UNSW-NB15 (CSV crudos, sin cabecera)"
+
+csv_columns: [srcip, sport, dstip, dsport, proto, state, dur, sbytes, dbytes, sttl, dttl, sloss, dloss, service, Sload, Dload, Spkts, Dpkts, swin, dwin, stcpb, dtcpb, smeansz, dmeansz, trans_depth, res_bdy_len, Sjit, Djit, Stime, Ltime, Sintpkt, Dintpkt, tcprtt, synack, ackdat, is_sm_ips_ports, ct_state_ttl, ct_flw_http_mthd, is_ftp_login, ct_ftp_cmd, ct_srv_src, ct_srv_dst, ct_dst_ltm, ct_src_ltm, ct_src_dport_ltm, ct_dst_sport_ltm, ct_dst_src_ltm, attack_cat, Label]
+
+# Stime y Ltime son epoch en segundos (UTC).
+column_roles:
+  label_col: "Label"
+  time_col: "Stime"
+  src_ip_col: "srcip"
+  dst_ip_col: "dstip"
+  src_port_col: "sport"
+  dst_port_col: "dsport"
+  protocol_col: "proto"
+
+known_issues:
+  - id: "sin_cabecera"
+    note: >
+      Los cuatro archivos se publican sin cabecera; los nombres vienen del
+      diccionario NUSW-NB15_features.csv.
+  - id: "replicas_incompletas"
+    note: >
+      Observado: la replica Mouwiya/UNSW-NB15 de Hugging Face trae solo
+      2.280.090 filas de las 2.540.044 oficiales (le falta el 10 %).
+  - id: "puertos_no_numericos"
+    note: >
+      Observado (30/09/2026): sport y dsport traen valores que no son puertos,
+      como 0x000b o 0x20205321 (hexadecimal) y "-" en flujos ICMP y ESP. Vigia
+      los lee como nulos y validity.nan_inf los cuenta (8 en sport, 61 en
+      dsport sobre los cuatro archivos).
+  - id: "faltantes_estructurales"
+    note: >
+      is_ftp_login y ct_flw_http_mthd vienen vacias en la mayoria de las filas
+      (56 % y 53 % del total): no aplican a flujos que no son FTP ni HTTP.
+      validity.nan_inf las marca como valores no finitos.
+  - id: "filas_leidas"
+    note: >
+      Observado: Vigia lee 2.540.047 filas en los cuatro archivos; la pagina
+      oficial declara 2.540.044.

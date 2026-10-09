@@ -1,0 +1,21 @@
+name: Feature or new check
+description: Propose a new check, dataset profile, reader or improvement.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The data problem it would catch
+      description: What goes wrong in a dataset or model today, and where it has been documented.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: How you would detect it, and how it could produce false positives.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Papers, dataset documentation or a reproducible example.

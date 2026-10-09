@@ -1,0 +1,13 @@
+/* Reset mínimo. El diseño real vive en theme.css (paleta compartida con el
+   reporte HTML del servidor, src/vigia/report/render.py). El estilo de
+   plantilla de marketing que trae create-vite por defecto (ancho fijo,
+   texto centrado) no aplica a un panel de datos. */
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  min-height: 100svh;
+}

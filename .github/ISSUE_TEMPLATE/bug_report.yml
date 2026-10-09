@@ -1,0 +1,51 @@
+name: Bug report
+description: Something crashes, or behaves differently from the documentation.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Include the full error message or traceback (VIGIA_DEBUG=1 shows the original traceback).
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: Command or code, and a minimal synthetic file if the input matters. Please do not attach real datasets.
+      render: shell
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where
+      options:
+        - CLI
+        - Python library
+        - REST API (vigia serve)
+        - Web dashboard
+        - Docker image / deploy files
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Vigía version
+      description: Output of `vigia version`.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Operating system and Python version
+      placeholder: "Windows 11, Python 3.12"
+    validations:
+      required: true
