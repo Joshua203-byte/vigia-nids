@@ -1,89 +1,94 @@
 # Vigía
 
-**Control de calidad continuo para los datos de modelos de ciberseguridad.**
+**English** · [Español](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/README.es.md)
 
-Vigía revisa los datasets con los que se entrenan los detectores de intrusiones y
-responde una pregunta incómoda: *¿este 0.99 de F1 es real, o es un artefacto de
-los datos?*
+**Continuous quality control for the datasets behind cybersecurity models.**
 
-La investigación sobre los datasets más usados del área (CIC-IDS2017,
-CSE-CIC-IDS2018, UGR'16) documenta duplicados masivos, etiquetas incorrectas,
-fugas entre entrenamiento y prueba, y columnas que le delatan la respuesta al
-modelo. El resultado es siempre el mismo: **el modelo parece excelente en el
-laboratorio y falla en una red real.**
+Vigía audits the datasets used to train intrusion detectors and answers an
+uncomfortable question: *is this 0.99 F1 real, or an artifact of the data?*
 
-> Estado: **v1.0.3 — los tres módulos implementados y
-> validados contra datos reales.** El auditor cubre los requisitos P0 (R1 a R10)
-> con cuatro salvedades —R5, R6, R7 y R8, más `labels.window`—, que están
-> descriptas en "Límites conocidos" de [`docs/PLAN.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/PLAN.md); además trae
-> los lectores de Zeek, Suricata EVE y PCAP (R13 y R14), una API REST, un panel
-> web y una imagen Docker. Cuatro de los cinco checks del monitor de deriva
-> están medidos sobre los cinco días de CIC-IDS2017 (`drift.concept`, rehecho
-> antes de publicar, solo está calibrado con datos sintéticos), los detectores
-> de envenenamiento sobre ataques inyectados en
-> ese mismo tráfico y sobre el ruido de etiqueta que documentaron Engelen et
-> al., y el auditor sobre los 10 archivos (16,2 M de filas) de CSE-CIC-IDS2018.
-> Los números están en [`benchmarks/RESULTADOS.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/benchmarks/RESULTADOS.md),
-> incluidos los casos donde el rendimiento es pobre. Los límites conocidos y lo
-> que queda pendiente: [`docs/PLAN.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/PLAN.md).
+Research on the most widely used datasets in the field (CIC-IDS2017,
+CSE-CIC-IDS2018, UGR'16) documents massive duplicates, wrong labels, leakage
+between training and test sets, and columns that give the answer away to the
+model. The result is always the same: **the model looks excellent in the lab and
+fails on a real network.**
 
-## Los tres módulos
+> Status: **v1.0.4, public beta.** All three modules are implemented and have
+> been run against real data. The auditor covers the P0 requirements of the
+> design (R1 to R10) with five exceptions (R5, R6, R7, R8 and `labels.window`),
+> described under "Known limits" in
+> [`docs/PLAN.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/PLAN.md).
+> It also ships readers for Zeek, Suricata EVE and PCAP, a REST API, a web
+> dashboard and a Docker image. Four of the five drift checks have been measured
+> on the five days of CIC-IDS2017 (`drift.concept` was rebuilt before release and
+> is only calibrated on synthetic data); the poisoning detectors on attacks
+> injected into that same traffic and on the label noise documented by Engelen et
+> al.; and the auditor on the 10 files (16.2 M rows) of CSE-CIC-IDS2018. The
+> numbers are in
+> [`benchmarks/RESULTADOS.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/benchmarks/RESULTADOS.md),
+> including the cases where performance is poor. Clean-label poisoning is not
+> detected. The pre-release audit was done entirely with Claude, with no human
+> reviewer, so it is not independent.
+>
+> **Most of the documentation is in Spanish.** This README is the exception.
 
-| Módulo | Comando | Qué responde |
+## The three modules
+
+| Module | Command | Question it answers |
 |---|---|---|
-| **1. Auditor** | `vigia audit` | ¿Este dataset tiene defectos que inflen las métricas? |
-| **2. Envenenamiento** | `vigia poison` | ¿Alguien insertó registros para manipular el modelo? |
-| **3. Deriva** | `vigia drift` | ¿El tráfico de hoy sigue pareciéndose al de entrenamiento? |
+| **1. Audit** | `vigia audit` | Does this dataset have defects that inflate the metrics? |
+| **2. Poisoning** | `vigia poison` | Did someone insert records to manipulate the model? |
+| **3. Drift** | `vigia drift` | Does today's traffic still look like the training data? |
 
-25 checks (16 del auditor, 4 de envenenamiento y 5 de deriva), 8 correcciones
-automáticas y la comparación de rendimiento antes/después.
+25 checks (16 for the audit, 4 for poisoning and 5 for drift), 8 automatic fixes
+and a before/after performance comparison.
 
-## Instalación
+## Install
 
 ```bash
-pip install vigia-nids                # núcleo: CLI, lectores y la mayoría de los checks
-pip install -e ".[dev]"                # o, desde el repositorio
+pip install vigia-nids                # core: CLI, readers and most checks
+pip install -e ".[dev]"               # or, from the repository
 vigia --help
 ```
 
-Requiere Python 3.11 o superior. Hay extras opcionales según lo que se necesite:
+Requires Python 3.11 or newer. Optional extras, depending on what you need:
 
-| Extra | Qué agrega |
+| Extra | What it adds |
 |---|---|
-| `[ml]` | `labels.noise` (cleanlab), `dup.near` (datasketch), `poison.loss`, `poison.knn`, `poison.cluster`, `drift.covariate` y `drift.concept` (scikit-learn), y la comparación antes/después (LightGBM) |
-| `[parquet]` | Instala `pyarrow`. No hace falta para leer ni escribir `.parquet`: Polars lo hace sin él |
-| `[api]` | API REST y panel web (`vigia serve`) |
-| `[pcap]` | Extraer flujos de un PCAP (NFStream) |
+| `[ml]` | `labels.noise` (cleanlab), `dup.near` (datasketch), `poison.loss`, `poison.knn`, `poison.cluster`, `drift.covariate` and `drift.concept` (scikit-learn), and the before/after comparison (LightGBM) |
+| `[parquet]` | Installs `pyarrow`. Not needed to read or write `.parquet`: Polars does it without it |
+| `[api]` | REST API and web dashboard (`vigia serve`) |
+| `[pcap]` | Extract flows from a PCAP (NFStream) |
 
-Sin `[ml]`, los checks que lo necesitan no fallan: quedan en "checks no ejecutados"
-con el comando para instalarlo.
+Without `[ml]` the checks that need it do not fail: they show up under "checks
+not run", with the command to install what is missing.
 
-## Uso
+## Usage
 
 ```bash
-# Auditar un dataset (las columnas se detectan solas por nombre)
+# Audit a dataset (columns are detected by name)
 vigia audit data/flows.csv --report out/
 
-# Usar el perfil de un dataset conocido (fija las columnas por vos)
+# Use the profile of a known dataset (sets the columns for you)
 vigia audit data/cic2017.csv --profile cic-ids-2017
 
-# Indicar las columnas explícitamente
+# State the columns explicitly
 vigia audit data/flows.parquet \
   --label-col Label --split-col split --time-col Timestamp \
   --src-ip-col "Src IP" --dst-ip-col "Dst IP" \
   --report out/
 
-# Correr solo una categoría de checks
+# Run only one category of checks
 vigia audit data/flows.csv --checks leak,dup
 
-# En CI: salir con código 1 si hay hallazgos críticos
+# In CI: exit with code 1 if there are critical findings
 vigia audit data/train.csv --fail-on critical
 
-# Listar los checks disponibles
+# List the available checks
 vigia checks
 ```
 
-Desde Python:
+From Python:
 
 ```python
 import vigia
@@ -99,125 +104,138 @@ from vigia.report import write_report
 write_report(report, "out/")  # report.html + report.json
 ```
 
-## Perfiles de datasets conocidos
+The traffic-light values are Spanish words: `rojo` (red), `amarillo` (yellow),
+`verde` (green) and `gris` (gray).
 
-`--profile` (o `vigia.load(..., profile=...)`) carga los metadatos verificados
-de un dataset público: columnas de etiqueta, tiempo e IPs, atacantes y ventanas
-de ataque documentados, y errores conocidos. Una columna pasada a mano siempre
-gana sobre el perfil.
+## Profiles of known datasets
 
-| Perfil | Dataset | Qué trae |
+`--profile` (or `vigia.load(..., profile=...)`) loads verified metadata for a
+public dataset: label, time and IP columns, documented attackers and attack
+windows, and known errors. A column passed by hand always wins over the profile.
+
+| Profile | Dataset | What it carries |
 |---|---|---|
-| `cic-ids-2017` | CIC-IDS2017 | columnas, 14 ventanas de ataque, errores conocidos |
-| `cse-cic-ids-2018` | CSE-CIC-IDS2018 | columnas (confirmadas en los CSV), 22 ventanas, etiquetas reales, problemas observados |
-| `unsw-nb15` | UNSW-NB15 (training y testing) | etiquetas, 9 categorías, atacantes, víctimas y jornadas de captura del GT oficial |
-| `unsw-nb15-raw` | UNSW-NB15 (4 CSV crudos) | los 49 nombres de columna, porque esos archivos no traen cabecera |
-| `ugr-16` | UGR'16 | calendario de ataques, capturas, IPs anonimizadas, etiquetas |
-| `ctu-13` | CTU-13 | 13 escenarios con malware, hosts infectados y duración; formato de etiquetas |
+| `cic-ids-2017` | CIC-IDS2017 | columns, 14 attack windows, known errors |
+| `cse-cic-ids-2018` | CSE-CIC-IDS2018 | columns (confirmed on the CSVs), 22 windows, real labels, observed problems |
+| `unsw-nb15` | UNSW-NB15 (training and testing) | labels, 9 categories, attackers, victims and capture sessions from the official ground truth |
+| `unsw-nb15-raw` | UNSW-NB15 (4 raw CSVs) | the 49 column names, since those files have no header |
+| `ugr-16` | UGR'16 | attack calendar, captures, anonymized IPs, labels |
+| `ctu-13` | CTU-13 | 13 malware scenarios, infected hosts and duration; label format |
 
-Cada valor sale de la documentación oficial del dataset; lo que la fuente no
-publica no se inventa. Tres advertencias:
+Every value comes from the dataset's official documentation; what the source
+does not publish is not invented. Three warnings:
 
-- `ugr-16`: el formato (CSV sin cabecera, 13 columnas) se confirmó solo sobre
-  una muestra de 5.000 filas de terceros, porque el sitio oficial no estaba
-  disponible; los nombres de columna son los del paper y `label` es una
-  convención del perfil.
-- `cse-cic-ids-2018`: el `Timestamp` usa reloj de 12 horas sin AM/PM, por eso el
-  perfil no lo fija como columna de tiempo.
-- `ctu-13`: la etiqueta tiene decenas de subtipos por escenario, así que el
-  perfil la agrupa en botnet, to_botnet, normal y background (`label_groups`) y
-  deja la original en `__label_original`. Un perfil propio puede hacer lo mismo.
+- `ugr-16`: the format (headerless CSV, 13 columns) was confirmed only on a
+  5,000-row third-party sample, because the official site was unavailable; the
+  column names are the paper's and `label` is a convention of the profile.
+- `cse-cic-ids-2018`: `Timestamp` uses a 12-hour clock without AM/PM, so the
+  profile does not set it as the time column.
+- `ctu-13`: the label has dozens of subtypes per scenario, so the profile groups
+  it into botnet, to_botnet, normal and background (`label_groups`) and keeps
+  the original in `__label_original`. A profile of your own can do the same.
 
-`vigia audit` muestra los errores conocidos del perfil al correr. Los
-resultados de auditar estos datasets están en
+`vigia audit` shows the profile's known errors when it runs. The results of
+auditing these datasets are in
 [`benchmarks/RESULTADOS.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/benchmarks/RESULTADOS.md).
 
-## API y panel web
+## API and web dashboard
 
 ```bash
 pip install -e ".[api]"
-export VIGIA_API_KEY="una-clave-larga-y-al-azar"
-vigia serve                      # API en http://localhost:8000
+export VIGIA_API_KEY="a-long-random-key"
+vigia serve                      # API at http://localhost:8000
 
-# o, con el panel incluido, en un solo contenedor:
-VIGIA_API_KEY=una-clave docker compose up --build
+# or, with the dashboard included, in a single container:
+VIGIA_API_KEY=a-key docker compose up --build
 ```
 
-Sin `VIGIA_API_KEY` la API corre **sin autenticación**: no la dejes así fuera de
-una máquina de desarrollo (con `VIGIA_ENV=production` se niega a arrancar). Para
-ponerla en un servidor con HTTPS, mirá [`docs/DESPLIEGUE.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/DESPLIEGUE.md). La API solo acepta CSV y Parquet (un PCAP recibe
-415), limita el tamaño de subida, borra el dataset al terminar el trabajo y en
-Docker corre como usuario sin privilegios. Referencia completa en
+Without `VIGIA_API_KEY` the API runs **without authentication**: do not leave it
+that way outside a development machine (with `VIGIA_ENV=production` it refuses to
+start). To put it on a server with HTTPS, see
+[`docs/DESPLIEGUE.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/DESPLIEGUE.md).
+The API only accepts CSV and Parquet (a PCAP gets a 415), limits the upload size,
+deletes the dataset when the job ends and runs as an unprivileged user in Docker.
+It isolates nothing between clients that share the key and has no per-job time
+limit: give the key only to people you trust. Full reference in
 [`docs/USO.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/USO.md#api-rest).
 
-## Qué revisa hoy
+## What it checks today
 
-| Check | Qué encuentra |
+| Check | What it finds |
 |---|---|
-| `dup.exact` | Filas idénticas: el modelo se evalúa con ejemplos que ya vio |
-| `dup.class_ratio` | Clases formadas mayoritariamente por duplicados |
-| `dup.cross_split` | **Crítico.** La misma fila en entrenamiento y en prueba |
-| `dup.near` | Filas casi idénticas que `dup.exact` no ve (MinHash); sobre 200.000 filas revisa una muestra |
-| `leak.temporal` | El conjunto de prueba se solapa con el de entrenamiento en el tiempo |
-| `leak.host` | El mismo host atacante en ambos splits: el modelo memoriza la IP |
-| `shortcut.single_feature` | Una sola columna predice la etiqueta demasiado bien |
-| `shortcut.identifier` | IPs, IDs de flujo o timestamps usados como características |
-| `validity.nan_inf` | NaN e infinitos (CIC-IDS2017 los tiene en las columnas de tasas) |
-| `validity.constant` | Columnas con un solo valor |
-| `validity.impossible` | Puertos > 65535, duraciones negativas, bytes negativos |
-| `validity.column_names` | Nombres con espacios (`" Destination Port"`) o ambiguos |
-| `leak.session` | Flujos de la misma conexión repartidos entre splits |
-| `labels.conflict` | Filas idénticas con etiquetas distintas |
-| `labels.noise` | Etiquetas que contradicen al resto del dataset (cleanlab); no reporta por debajo del 0,1 % y declara cuánto pudo sobreestimar |
-| `labels.taxonomy` | La misma clase escrita de varias formas |
-| `labels.imbalance` | Clases con tan pocos ejemplos que su métrica no dice nada |
+| `dup.exact` | Identical rows: the model is evaluated on examples it has already seen |
+| `dup.class_ratio` | Classes made up mostly of duplicates |
+| `dup.cross_split` | **Critical.** The same row in training and in test |
+| `dup.near` | Near-identical rows that `dup.exact` misses (MinHash); above 200,000 rows it reviews a sample |
+| `leak.temporal` | The test set overlaps the training set in time |
+| `leak.host` | The same attacker host in both splits: the model memorizes the IP |
+| `shortcut.single_feature` | A single column predicts the label too well |
+| `shortcut.identifier` | IPs, flow IDs or timestamps used as features |
+| `validity.nan_inf` | NaN and infinities (CIC-IDS2017 has them in the rate columns) |
+| `validity.constant` | Columns with a single value |
+| `validity.impossible` | Ports > 65535, negative durations, negative bytes |
+| `validity.column_names` | Names with spaces (`" Destination Port"`) or ambiguous ones |
+| `leak.session` | Flows of the same connection split across sets |
+| `labels.conflict` | Identical rows with different labels |
+| `labels.noise` | Labels that contradict the rest of the dataset (cleanlab); it does not report below 0.1 % and states how much it may have overestimated |
+| `labels.taxonomy` | The same class written in several ways |
+| `labels.imbalance` | Classes with so few examples that their metric says nothing |
 
-**Columnas de rol.** El tiempo y las IPs que declares (con `--time-col`,
-`--src-ip-col`, `--dst-ip-col` o con un perfil) se tratan como metadatos:
-`shortcut.identifier` no las marca y no cuentan para decidir si dos filas son
-duplicadas, así que el mismo flujo visto desde otra IP u otra hora se detecta
-como duplicado. Siguen disponibles para `shortcut.single_feature` y los checks de
-fuga, que son los que encuentran una IP que delata la etiqueta. Las columnas que
-solo se detectan por nombre se tratan como posibles identificadores.
+**Known limits of the checks.** `shortcut.single_feature` measures the balanced
+accuracy of a "majority class per value" rule on the same rows it computes it
+on (no holdout), and only reports columns above the threshold, not a model
+trained on each column. `leak.session` groups by 5-tuple without a time window:
+a tuple reused weeks later counts as the same session. The full list is in
+[`docs/PLAN.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/PLAN.md).
 
-Cada hallazgo trae severidad, métrica, filas afectadas, ejemplos concretos y una
-recomendación. Un check que no puede correr (falta la columna de split, por
-ejemplo) no falla en silencio: aparece en la sección "checks no ejecutados" del
-reporte.
+**Role columns.** The time and IP columns you declare (with `--time-col`,
+`--src-ip-col`, `--dst-ip-col` or a profile) are treated as metadata:
+`shortcut.identifier` does not flag them and they do not count when deciding
+whether two rows are duplicates, so the same flow seen from another IP or at
+another time is detected as a duplicate. They remain available to
+`shortcut.single_feature` and to the leakage checks, which are the ones that find
+an IP giving the label away. Columns detected only by name are treated as
+possible identifiers.
 
-### El semáforo
+Every finding carries a severity, a metric, the affected rows, concrete examples
+and a recommendation. A check that cannot run (the split column is missing, for
+example) does not fail silently: it appears in the "checks not run" section of
+the report.
 
-| Color | Significa |
+### The traffic light
+
+| Color | Meaning |
 |---|---|
-| **rojo** | Hay hallazgos críticos o altos, o algún check falló por un error interno |
-| **amarillo** | Hay hallazgos medios o bajos |
-| **verde** | Sin hallazgos y todos los checks se ejecutaron |
-| **gris** | Sin hallazgos, pero algunos checks no se ejecutaron |
+| **red** | There are critical or high findings, or a check failed with an internal error |
+| **yellow** | There are medium or low findings |
+| **green** | No findings and every check ran |
+| **gray** | No findings, but some checks did not run |
 
-El gris existe porque "no encontré nada" y "está limpio" no son lo mismo. Si la
-columna de etiqueta o la de split no se detectan, los checks que se saltan son
-justamente los que buscan fuga y duplicados entre conjuntos: dar verde ahí sería
-confirmar que el dataset está bien cuando en realidad casi no se lo revisó. Si el
-semáforo da gris, especificá las columnas a mano con `--label-col` y `--split-col`.
+Gray exists because "I found nothing" and "it is clean" are not the same thing.
+If the label or split column is not detected, the checks that get skipped are
+precisely the ones that look for leakage and duplicates across sets: returning
+green there would confirm that the dataset is fine when it was hardly reviewed.
+If the light is gray, specify the columns by hand with `--label-col` and
+`--split-col`.
 
-## Corregir
+## Fixing
 
-Los hallazgos nombran su corrección. `vigia fix` las aplica:
+Findings name their fix. `vigia fix` applies them:
 
 ```bash
-# Ver las disponibles
+# See the available ones
 vigia fixes
 
-# Aplicarlas en cadena; el archivo original nunca se toca
+# Apply them in a chain; the original file is never touched
 vigia fix data/flows.csv \
   --apply drop_duplicates,drop_constant,drop_identifiers \
-  --out data/flows_corregido.parquet
+  --out data/flows_fixed.parquet
 ```
 
-Las filas con etiqueta dudosa **nunca se borran**: `quarantine_noise` las deja
-en un archivo aparte para que una persona las revise.
+Rows with doubtful labels are **never deleted**: `quarantine_noise` puts them in
+a separate file for a person to review.
 
-## Medir cuánto del rendimiento era real
+## Measuring how much of the performance was real
 
 ```python
 from vigia.benchmark import compare
@@ -227,75 +245,77 @@ print(c.summary())
 print(c.after.per_class_recall)
 ```
 
-Entrena el mismo modelo antes y después de corregir. Una caída no significa
-que las correcciones empeoraron el modelo: significa que el número original
-estaba inflado. Sobre CIC-IDS2017, cambiar un split aleatorio por uno temporal
-lleva el recall de DoS Hulk, PortScan y DDoS de un valor que, con el split aleatorio,
-oscila entre 0 y casi 1 según la semilla, a **0,00 en las 10 semillas** — ver
+It trains the same model before and after fixing. A drop does not mean the fixes
+made the model worse: it means the original number was inflated. On CIC-IDS2017,
+switching a random split for a temporal one takes the recall of DoS Hulk,
+PortScan and DDoS from a value that, with the random split, ranges between 0 and
+almost 1 depending on the seed, to **0.00 in all 10 seeds tried**. See
 [`benchmarks/RESULTADOS.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/benchmarks/RESULTADOS.md).
 
-## Formatos de entrada
+## Input formats
 
-| Formato | Extensión | Notas |
+| Format | Extension | Notes |
 |---|---|---|
-| CSV | `.csv`, `.txt` | Reintenta en cp1252 si no es UTF-8 |
-| Parquet | `.parquet`, `.pq` | Conserva los tipos |
-| Zeek | `.log` | TSV con cabecera o JSON Lines |
-| Suricata EVE | `.json`, `.eve` | `--event-type` elige flujos o alertas |
-| PCAP | `.pcap`, `.pcapng`, `.cap` | Con `pip install 'vigia-nids[pcap]'` |
+| CSV | `.csv`, `.txt` | Retries as cp1252 if it is not UTF-8 |
+| Parquet | `.parquet`, `.pq` | Keeps the types |
+| Zeek | `.log` | TSV with header or JSON Lines |
+| Suricata EVE | `.json`, `.eve` | `--event-type` picks flows or alerts |
+| PCAP | `.pcap`, `.pcapng`, `.cap` | With `pip install 'vigia-nids[pcap]'` |
 
-Archivo suelto o carpeta completa: los datasets CIC vienen partidos en un
-archivo por día, Vigía los concatena y conserva la procedencia en
-`__source_file`. Los PCAP se leen de a uno, porque extraer flujos tarda minutos.
+A single file or a whole folder: CIC datasets come split into one file per day;
+Vigía concatenates them and keeps the origin in `__source_file`. PCAPs are read
+one at a time, because extracting flows takes minutes.
 
-Detalles de cada formato en [`docs/USO.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/USO.md#formatos-de-entrada).
+Details of each format in
+[`docs/USO.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/USO.md#formatos-de-entrada).
 
-## Desarrollo
+## Development
 
 ```bash
 pip install -e ".[dev,ml]"
 
-pytest                 # pruebas
+pytest                 # tests
 ruff check src tests   # lint
-ruff format src tests  # formato
-mypy src               # tipos
+ruff format src tests  # format
+mypy src               # types
 ```
 
-Agregar un check nuevo es una clase con cuatro atributos y un método. El
-registro es automático al importarse el módulo desde `vigia/checks/__init__.py`.
-Los detalles están en [`docs/ARQUITECTURA.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/ARQUITECTURA.md).
+Adding a new check is a class with four attributes and one method. Registration
+is automatic when the module is imported from `vigia/checks/__init__.py`. Details
+in [`docs/ARQUITECTURA.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/ARQUITECTURA.md).
 
-## Documentación
+## Documentation (in Spanish)
 
-| Documento | Para qué |
+| Document | What it is for |
 |---|---|
-| [`docs/CHECKS.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/CHECKS.md) | Qué significa cada hallazgo del auditor y qué hacer |
-| [`docs/ENVENENAMIENTO.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/ENVENENAMIENTO.md) | Módulo 2: los detectores, el simulador y qué tan bien funcionan |
-| [`docs/DERIVA.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/DERIVA.md) | Módulo 3: los checks, las métricas y cómo leerlos |
-| [`docs/USO.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/USO.md) | Referencia de la CLI, del SDK y del formato JSON |
-| [`docs/DESPLIEGUE.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/DESPLIEGUE.md) | Poner la API y el panel en un servidor: Caddy, variables, qué vigilar y los límites conocidos |
-| [`docs/ARQUITECTURA.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/ARQUITECTURA.md) | Cómo está armado por dentro; cómo agregar un check |
-| [`benchmarks/RESULTADOS.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/benchmarks/RESULTADOS.md) | Resultados verificados: NSL-KDD, CIC-IDS2017, CSE-CIC-IDS2018, UNSW-NB15, CTU-13, el control de falsos positivos y la calibración |
-| [`docs/PLAN.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/PLAN.md) | Estado, límites conocidos, lo que queda pendiente y el plan original por fases |
-| [`AUDITORIA-1.0.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/auditoria-1.0/AUDITORIA-1.0.md) | La auditoría previa a la 1.0: 50 hallazgos, cómo se reprodujeron y cómo se corrigió cada uno |
-| [`VERIFICACION-1.0.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/auditoria-1.0/VERIFICACION-1.0.md) | La verificación de esas correcciones y lo que encontró. La hizo la misma sesión de Claude que escribió las correcciones: no es independiente |
+| [`docs/CHECKS.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/CHECKS.md) | What each audit finding means and what to do |
+| [`docs/ENVENENAMIENTO.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/ENVENENAMIENTO.md) | Module 2: the detectors, the simulator and how well they work |
+| [`docs/DERIVA.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/DERIVA.md) | Module 3: the checks, the metrics and how to read them |
+| [`docs/USO.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/USO.md) | CLI, SDK and JSON format reference |
+| [`docs/DESPLIEGUE.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/DESPLIEGUE.md) | Putting the API and dashboard on a server: Caddy, variables, what to watch and the known limits |
+| [`docs/ARQUITECTURA.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/ARQUITECTURA.md) | How it is built inside; how to add a check |
+| [`docs/REPRODUCIR.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/REPRODUCIR.md) | How to reproduce the results: where each dataset comes from and one command per result |
+| [`benchmarks/RESULTADOS.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/benchmarks/RESULTADOS.md) | Verified results: NSL-KDD, CIC-IDS2017, CSE-CIC-IDS2018, UNSW-NB15, CTU-13, the false-positive control and the calibration |
+| [`docs/PLAN.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia/docs/PLAN.md) | Status, known limits, what is pending and the original phased plan |
+| [`AUDITORIA-1.0.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/auditoria-1.0/AUDITORIA-1.0.md) | The pre-1.0 audit: 50 findings, how each was reproduced and fixed |
+| [`VERIFICACION-1.0.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/auditoria-1.0/VERIFICACION-1.0.md) | The verification of those fixes and what it found. The same Claude session that wrote the fixes did it: it is not independent |
 
-## Documento de diseño
+## Design document
 
-El diseño completo — los tres módulos (auditor, envenenamiento, deriva), la
-arquitectura, el plan por fases y las referencias académicas — está en
+The full design (the three modules, the architecture, the phased plan and the
+academic references) is in
 [`vigia.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/vigia.md).
 
-## Contribuir y seguridad
+## Contributing and security
 
-Los reportes más útiles son los hallazgos equivocados: un falso positivo o un
-defecto real que Vigía no vio sobre un dataset público. Hay una plantilla para
-eso en los [issues](https://github.com/Joshua203-byte/vigia-nids/issues/new/choose).
-Cómo armar el entorno y las convenciones del proyecto:
+The most useful reports are wrong findings: a false positive, or a real defect
+Vigía missed, on a public dataset. There is a template for that in the
+[issues](https://github.com/Joshua203-byte/vigia-nids/issues/new/choose). How to
+set up the environment and the project conventions:
 [`CONTRIBUTING.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/CONTRIBUTING.md).
-Para reportar una vulnerabilidad, no abras un issue público: ver
+To report a vulnerability, do not open a public issue: see
 [`SECURITY.md`](https://github.com/Joshua203-byte/vigia-nids/blob/main/SECURITY.md).
 
-## Licencia
+## License
 
 Apache 2.0.

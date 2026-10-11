@@ -5,6 +5,17 @@ y este proyecto sigue [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-10-11
+
+El código no cambia. Es la versión que pone la página de PyPI en inglés.
+
+### Cambiado
+
+- El resumen del paquete y el README que empaqueta PyPI (`vigia/README.md`) pasan
+  a inglés, con el estado actual (beta pública, sin revisión humana, lo que falta)
+  y la lista de límites de los checks. El README en español se conserva como
+  `vigia/README.es.md`. El resto de la documentación sigue en español.
+
 ## [1.0.3] - 2026-10-09
 
 El código de los checks no cambia. Cambia dónde vive el proyecto.
@@ -335,6 +346,7 @@ datos reales.
 - Documentación: arquitectura, checks, uso, deriva y envenenamiento en
   [`docs/`](docs/).
 
+[1.0.4]: https://github.com/Joshua203-byte/vigia-nids/releases/tag/v1.0.4
 [1.0.3]: https://github.com/Joshua203-byte/vigia-nids/releases/tag/v1.0.3
 [1.0.2]: https://pypi.org/project/vigia-nids/1.0.2/
 [1.0.1]: https://pypi.org/project/vigia-nids/1.0.1/

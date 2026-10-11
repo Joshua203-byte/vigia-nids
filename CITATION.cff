@@ -6,8 +6,8 @@ authors:
   - family-names: Garcilazo
     given-names: Joshua
     alias: Joshua203-byte
-version: 1.0.3
-date-released: 2026-10-09
+version: 1.0.4
+date-released: 2026-10-11
 license: Apache-2.0
 repository-code: "https://github.com/Joshua203-byte/vigia-nids"
 url: "https://pypi.org/project/vigia-nids/"

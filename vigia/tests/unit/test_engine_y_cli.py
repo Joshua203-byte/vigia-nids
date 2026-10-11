@@ -613,17 +613,21 @@ def test_la_documentacion_cuenta_los_checks_que_hay():
     por_modulo = Counter(module_of(c) for c in all_checks(None))
     total = sum(por_modulo.values())
 
-    readme = (raiz / "README.md").read_text(encoding="utf-8")
-    m = re.search(
-        r"(\d+) checks \((\d+) del auditor, (\d+) de envenenamiento y (\d+) de deriva\)", readme
-    )
-    assert m, "el README ya no dice cuantos checks hay"
-    assert tuple(map(int, m.groups())) == (
-        total,
-        por_modulo["auditor"],
-        por_modulo["poison"],
-        por_modulo["drift"],
-    )
+    esperado = (total, por_modulo["auditor"], por_modulo["poison"], por_modulo["drift"])
+    for nombre, patron in (
+        (
+            "README.es.md",
+            r"(\d+) checks \((\d+) del auditor, (\d+) de envenenamiento y (\d+) de deriva\)",
+        ),
+        (
+            "README.md",
+            r"(\d+) checks \((\d+) for the audit, (\d+) for poisoning and (\d+) for drift\)",
+        ),
+    ):
+        readme = (raiz / nombre).read_text(encoding="utf-8")
+        m = re.search(patron, readme)
+        assert m, f"{nombre} ya no dice cuantos checks hay"
+        assert tuple(map(int, m.groups())) == esperado, nombre
 
     plan = (raiz / "docs" / "PLAN.md").read_text(encoding="utf-8")
     m = re.search(r"Módulo 1 \(auditor\) \| (\d+) checks", plan)

@@ -80,7 +80,7 @@ Python 3.11 or newer. Usage, Python API and options:
 
 ## Status and honest caveats
 
-Version 1.0.3, on PyPI. 428 tests, CI on Linux and Windows with Python 3.11 to
+Version 1.0.4, on PyPI. 428 tests, CI on Linux and Windows with Python 3.11 to
 3.13. Before the release the code went through an audit (50 findings, 1
 critical), fixes and a verification. **All of it was done with Claude
 (Anthropic), with no human reviewer, so it is not an independent audit.** The
