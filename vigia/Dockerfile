@@ -27,7 +27,7 @@ ENV VITE_API_BASE_URL=""
 RUN npm run build
 
 # ---- Etapa 2: runtime Python -------------------------------------------
-FROM python:3.12-slim@sha256:02108f5d322dd89f1c9e552442c25acb0543dfdbc455693a5599624f20d9155d AS runtime
+FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928 AS runtime
 
 # No se instala nada con apt: ni herramientas de compilacion (pyarrow y demas
 # traen wheels precompilados para slim) ni curl, que solo servia para el
