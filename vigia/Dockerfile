@@ -15,7 +15,7 @@
 # son etiquetas que se mueven, y una imagen de produccion no puede cambiar
 # debajo de un build repetido (AUDITORIA-1.0.md, SEC-09). Para actualizarlas,
 # se vuelve a inspeccionar la etiqueta y se cambia el digest en un commit.
-FROM node:25-slim@sha256:81db02c4b671288a03915da9534dbd54f96d0e7c24d80ccc54f5b36b2e684370 AS web-build
+FROM node:26-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS web-build
 WORKDIR /web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
